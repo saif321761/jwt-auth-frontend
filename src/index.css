@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
 * {
   margin: 0;
   padding: 0;
@@ -6,8 +8,6 @@
 
 body {
   min-height: 100vh;
-  background: #1e1e2e;
-  font-family: 'Segoe UI', sans-serif;
 }
 
 #root {
@@ -17,10 +17,5 @@ body {
 }
 
 a {
-  color: #89b4fa;
   text-decoration: none;
-}
-
-a:hover {
-  text-decoration: underline;
 }

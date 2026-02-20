@@ -16,7 +16,7 @@ export const AuthProvider = ({ children }) => {
 }, []);
 
   const register = async (data) => {
-    const res = await axiosInstance.post('/register/', data);
+    const res = await axiosInstance.post('/auth/register/', data);
     localStorage.setItem('access', res.data.access);
     localStorage.setItem('refresh', res.data.refresh);
     localStorage.setItem('user', JSON.stringify(res.data.user));
@@ -24,12 +24,12 @@ export const AuthProvider = ({ children }) => {
   };
 
   const login = async (data) => {
-    const res = await axiosInstance.post('/login/', data);
+    const res = await axiosInstance.post('/auth/login/', data);
     localStorage.setItem('access', res.data.access);
     localStorage.setItem('refresh', res.data.refresh);
 
     // Fetch user profile after login
-    const profileRes = await axiosInstance.get('/profile/', {
+    const profileRes = await axiosInstance.get('/auth/profile/', {
       headers: { Authorization: `Bearer ${res.data.access}` }
     });
     localStorage.setItem('user', JSON.stringify(profileRes.data));
