@@ -184,6 +184,16 @@ const Navbar = () => {
             <>
               <Link
                 as={RouterLink}
+                to="/jobs"
+                fontSize="sm"
+                fontWeight="600"
+                color={textColor}
+                _hover={{ color: hoverColor, textDecoration: 'none' }}
+              >
+                Jobs
+              </Link>
+              <Link
+                as={RouterLink}
                 to="/login"
                 fontSize="sm"
                 fontWeight="600"

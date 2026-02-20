@@ -21,6 +21,10 @@ import {
   Avatar,
   Divider,
   useColorModeValue,
+  Input,
+  Select,
+  Stack,
+  Spacer,
 } from '@chakra-ui/react';
 import { AddIcon, ViewIcon, EditIcon, DeleteIcon } from '@chakra-ui/icons';
 import axiosInstance from '../api/axios';
@@ -32,6 +36,22 @@ const JobsList = () => {
   const toast = useToast();
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [count, setCount] = useState(0);
+  const [page, setPage] = useState(1);
+  const [filters, setFilters] = useState({
+    q: '',
+    status: '',
+    company: '',
+    location: '',
+  });
+  const [appliedFilters, setAppliedFilters] = useState({
+    q: '',
+    status: '',
+    company: '',
+    location: '',
+  });
+
+  const PAGE_SIZE = 10;
 
   // Use theme colors hook
   const {
@@ -74,8 +94,22 @@ const JobsList = () => {
   const fetchJobs = async () => {
     setLoading(true);
     try {
-      const res = await axiosInstance.get('/jobs/');
-      setJobs(res.data);
+      const params = {
+        page,
+        q: appliedFilters.q || undefined,
+        status: appliedFilters.status || undefined,
+        company: appliedFilters.company || undefined,
+        location: appliedFilters.location || undefined,
+      };
+      const res = await axiosInstance.get('/jobs/', { params });
+      const data = res.data;
+      if (data && Array.isArray(data.results)) {
+        setJobs(data.results);
+        setCount(data.count || 0);
+      } else {
+        setJobs(data);
+        setCount(Array.isArray(data) ? data.length : 0);
+      }
     } catch (err) {
       toast({
         title: 'Failed to load jobs',
@@ -92,7 +126,19 @@ const JobsList = () => {
 
   useEffect(() => {
     fetchJobs();
-  }, []);
+  }, [page, appliedFilters]);
+
+  const applyFilters = () => {
+    setPage(1);
+    setAppliedFilters(filters);
+  };
+
+  const clearFilters = () => {
+    const cleared = { q: '', status: '', company: '', location: '' };
+    setFilters(cleared);
+    setAppliedFilters(cleared);
+    setPage(1);
+  };
 
   const handleDelete = async (id) => {
     try {
@@ -180,6 +226,8 @@ const JobsList = () => {
     }
   };
 
+  const totalPages = Math.max(1, Math.ceil(count / PAGE_SIZE));
+
   return (
     <Box bg={bgPrimary} minH="100vh" py={10}>
       {/* Decorative background elements - theme aware */}
@@ -237,7 +285,7 @@ const JobsList = () => {
           
           <Button
             as={RouterLink}
-            to="/jobs/new"
+            to={user ? '/jobs/new' : '/login'}
             size="lg"
             bgGradient={`linear(135deg, ${gradientFrom}, ${gradientTo})`}
             color="white"
@@ -255,9 +303,63 @@ const JobsList = () => {
             fontWeight="600"
             transition="all 0.2s"
           >
-            Create New Job
+            {user ? 'Create New Job' : 'Login to Create'}
           </Button>
         </Flex>
+
+        <Box
+          bg={bgSecondary}
+          borderRadius="xl"
+          border="1px solid"
+          borderColor={borderColor}
+          p={5}
+          mb={6}
+          boxShadow={cardShadow}
+        >
+          <Stack direction={{ base: 'column', md: 'row' }} spacing={4} align="center">
+            <Input
+              placeholder="Search title, company, location..."
+              value={filters.q}
+              onChange={(e) => setFilters({ ...filters, q: e.target.value })}
+              bg={inputBg}
+              borderColor={inputBorder}
+            />
+            <Input
+              placeholder="Company"
+              value={filters.company}
+              onChange={(e) => setFilters({ ...filters, company: e.target.value })}
+              bg={inputBg}
+              borderColor={inputBorder}
+            />
+            <Input
+              placeholder="Location"
+              value={filters.location}
+              onChange={(e) => setFilters({ ...filters, location: e.target.value })}
+              bg={inputBg}
+              borderColor={inputBorder}
+            />
+            <Select
+              placeholder="Status"
+              value={filters.status}
+              onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+              bg={inputBg}
+              borderColor={inputBorder}
+            >
+              <option value="open">Open</option>
+              <option value="in_progress">In Progress</option>
+              <option value="closed">Closed</option>
+            </Select>
+            <Spacer />
+            <HStack spacing={3}>
+              <Button colorScheme="purple" onClick={applyFilters}>
+                Apply
+              </Button>
+              <Button variant="outline" onClick={clearFilters}>
+                Clear
+              </Button>
+            </HStack>
+          </Stack>
+        </Box>
 
         {loading && (
           <Box mb={8}>
@@ -298,14 +400,14 @@ const JobsList = () => {
               <AddIcon boxSize={6} color={emptyStateIconColor} />
             </Box>
             <Heading size="md" color={textPurple} mb={2}>
-              No jobs yet
+              No results
             </Heading>
             <Text color={textSecondary} mb={6}>
-              Get started by creating your first job posting
+              Try adjusting your search or filters
             </Text>
             <Button
               as={RouterLink}
-              to="/jobs/new"
+              to={user ? '/jobs/new' : '/login'}
               bgGradient={`linear(135deg, ${gradientFrom}, ${gradientTo})`}
               color="white"
               _hover={{
@@ -315,7 +417,7 @@ const JobsList = () => {
               size="lg"
               leftIcon={<AddIcon />}
             >
-              Create Your First Job
+              {user ? 'Create Your First Job' : 'Login to Create'}
             </Button>
           </Box>
         ) : (
@@ -480,7 +582,26 @@ const JobsList = () => {
 
         {/* Job count footer */}
         {!loading && jobs.length > 0 && (
-          <Flex justify="center" mt={8}>
+          <Flex direction="column" align="center" mt={8} gap={4}>
+            <HStack spacing={3}>
+              <Button
+                size="sm"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                isDisabled={page <= 1}
+              >
+                Prev
+              </Button>
+              <Text color={textSecondary} fontSize="sm">
+                Page {page} of {totalPages}
+              </Text>
+              <Button
+                size="sm"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                isDisabled={page >= totalPages}
+              >
+                Next
+              </Button>
+            </HStack>
             <Box
               bg={jobCountBg}
               px={4}
@@ -491,11 +612,12 @@ const JobsList = () => {
               gap={2}
             >
               <Text color={jobCountText} fontSize="sm" fontWeight="600">
-                📊 {jobs.length} {jobs.length === 1 ? 'job' : 'jobs'} total
+                ???? {count || jobs.length} {count === 1 ? 'job' : 'jobs'} total
               </Text>
             </Box>
           </Flex>
         )}
+
       </Container>
     </Box>
   );

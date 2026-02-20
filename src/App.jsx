@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
+import Home from './pages/Home'; // Add this import
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
@@ -15,7 +16,7 @@ const App = () => {
       <BrowserRouter>
         <Navbar />
         <Routes>
-          <Route path="/" element={<Navigate to="/jobs" />} />
+          <Route path="/" element={<Home />} /> {/* Change this to Home */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route
@@ -26,14 +27,7 @@ const App = () => {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/jobs"
-            element={
-              <ProtectedRoute>
-                <JobsList />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/jobs" element={<JobsList />} />
           <Route
             path="/jobs/new"
             element={
@@ -50,14 +44,7 @@ const App = () => {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/jobs/:id"
-            element={
-              <ProtectedRoute>
-                <JobDetail />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/jobs/:id" element={<JobDetail />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

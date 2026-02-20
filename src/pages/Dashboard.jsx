@@ -27,13 +27,19 @@ import useAuth from '../hooks/useAuth';
 import { useThemeColors } from '../hooks/useColorModeValues';
 
 const Dashboard = () => {
+  // ✅ ALL HOOKS MUST BE CALLED AT THE TOP LEVEL, BEFORE ANY RETURNS
+  
+  // 1. Authentication and routing hooks
   const { logout } = useAuth();
   const toast = useToast();
+  
+  // 2. State hooks
   const [profile, setProfile] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   
-  // Use theme colors hook
+  // 3. Theme hooks - call these unconditionally at the top
+  const themeColors = useThemeColors();
   const {
     bgPrimary,
     bgSecondary,
@@ -50,9 +56,9 @@ const Dashboard = () => {
     badgeText,
     gradientFrom,
     gradientTo,
-  } = useThemeColors();
+  } = themeColors;
 
-  // Additional color mode values
+  // 4. Additional color mode values - also unconditional
   const statBg = useColorModeValue('white', '#121827');
   const errorBg = useColorModeValue('red.50', 'red.900');
   const errorBorder = useColorModeValue('red.200', 'red.700');
@@ -64,7 +70,10 @@ const Dashboard = () => {
     '0 10px 25px -5px rgba(168, 85, 247, 0.4)',
     '0 10px 25px -5px rgba(0, 0, 0, 0.6)'
   );
+  const activeBadgeBg = useColorModeValue('green.50', 'green.900');
+  const activeBadgeColor = useColorModeValue('green.700', 'green.200');
 
+  // 5. Effects - also hooks
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -87,6 +96,7 @@ const Dashboard = () => {
     fetchProfile();
   }, [toast]);
 
+  // 6. Event handlers (not hooks)
   const handleLogout = () => {
     logout();
     toast({
@@ -99,7 +109,7 @@ const Dashboard = () => {
     });
   };
 
-  // Get initials from username for avatar
+  // 7. Helper functions (not hooks)
   const getInitials = (name) => {
     return name
       .split(' ')
@@ -109,9 +119,42 @@ const Dashboard = () => {
       .slice(0, 2);
   };
 
+  // ✅ NOW you can have conditional returns
+  if (loading) {
+    return (
+      <Box bg={bgPrimary} minH="100vh" py={10}>
+        <Container maxW="1000px">
+          <Progress 
+            size="xs" 
+            isIndeterminate 
+            colorScheme="purple" 
+            borderRadius="full"
+            bg={progressBg}
+          />
+          <Text color={progressText} fontSize="sm" mt={2} textAlign="center">
+            Loading your profile...
+          </Text>
+        </Container>
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box bg={bgPrimary} minH="100vh" py={10}>
+        <Container maxW="1000px">
+          <Box bg={errorBg} border="1px solid" borderColor={errorBorder} borderRadius="lg" p={4}>
+            <Text color={errorText} fontWeight="500">⚠️ {error}</Text>
+          </Box>
+        </Container>
+      </Box>
+    );
+  }
+
+  // Main render
   return (
     <Box bg={bgPrimary} minH="100vh" py={10}>
-      {/* Decorative background elements - theme aware */}
+      {/* Decorative background elements */}
       <Box
         position="fixed"
         top="10%"
@@ -176,47 +219,12 @@ const Dashboard = () => {
               borderColor: borderColorHover,
               transform: 'translateY(-2px)',
             }}
-            _active={{
-              bg: badgeBg,
-              transform: 'translateY(0)',
-            }}
             borderRadius="lg"
             fontWeight="600"
-            transition="all 0.2s"
           >
             Logout
           </Button>
         </Flex>
-
-        {loading && (
-          <Box mb={8}>
-            <Progress 
-              size="xs" 
-              isIndeterminate 
-              colorScheme="purple" 
-              borderRadius="full"
-              bg={progressBg}
-            />
-            <Text color={progressText} fontSize="sm" mt={2} textAlign="center" fontWeight="500">
-              Loading your profile...
-            </Text>
-          </Box>
-        )}
-
-        {error && (
-          <Box
-            bg={errorBg}
-            border="1px solid"
-            borderColor={errorBorder}
-            borderRadius="lg"
-            p={4}
-            mb={6}
-          >
-            <Text color={errorText} fontWeight="500">
-              ⚠️ {error}
-            </Text>
-          </Box>
-        )}
 
         {profile && (
           <VStack spacing={6} align="stretch">
@@ -229,21 +237,10 @@ const Dashboard = () => {
               boxShadow={cardShadow}
               overflow="hidden"
             >
-              {/* Top gradient accent */}
-              <Box
-                h="4px"
-                bgGradient={`linear(to-r, ${gradientFrom}, ${gradientTo})`}
-                w="full"
-              />
+              <Box h="4px" bgGradient={`linear(to-r, ${gradientFrom}, ${gradientTo})`} w="full" />
               
               <Box p={{ base: 6, md: 8 }}>
-                <Flex 
-                  direction={{ base: 'column', md: 'row' }}
-                  align={{ base: 'center', md: 'start' }}
-                  gap={6}
-                  mb={6}
-                >
-                  {/* Avatar section */}
+                <Flex direction={{ base: 'column', md: 'row' }} align={{ base: 'center', md: 'start' }} gap={6} mb={6}>
                   <Avatar
                     size="xl"
                     name={profile.username}
@@ -254,29 +251,11 @@ const Dashboard = () => {
                   />
                   
                   <Box flex={1} textAlign={{ base: 'center', md: 'left' }}>
-                    <HStack 
-                      spacing={2} 
-                      justify={{ base: 'center', md: 'flex-start' }}
-                      mb={2}
-                    >
-                      <Heading 
-                        as="h2" 
-                        size="lg" 
-                        color={textPurple}
-                        fontWeight="700"
-                      >
+                    <HStack spacing={2} justify={{ base: 'center', md: 'flex-start' }} mb={2}>
+                      <Heading as="h2" size="lg" color={textPurple} fontWeight="700">
                         {profile.username}
                       </Heading>
-                      <Badge
-                        colorScheme="purple"
-                        variant="subtle"
-                        px={3}
-                        py={1}
-                        borderRadius="full"
-                        fontSize="xs"
-                        bg={badgeBg}
-                        color={badgeText}
-                      >
+                      <Badge bg={activeBadgeBg} color={activeBadgeColor} px={3} py={1} borderRadius="full">
                         Active
                       </Badge>
                     </HStack>
@@ -286,62 +265,35 @@ const Dashboard = () => {
                     </Text>
                     
                     <SimpleGrid columns={{ base: 1, sm: 3 }} spacing={4}>
-                      <Box
-                        bg={bgTertiary}
-                        borderRadius="lg"
-                        p={3}
-                        border="1px solid"
-                        borderColor={borderColor}
-                      >
+                      {/* User ID Card */}
+                      <Box bg={bgTertiary} borderRadius="lg" p={3} border="1px solid" borderColor={borderColor}>
                         <HStack spacing={2}>
-                          <Icon as={FaIdBadge} color={`${gradientFrom}`} boxSize={4} />
+                          <Icon as={FaIdBadge} color={gradientFrom} boxSize={4} />
                           <Box>
-                            <Text color={textPurple} fontSize="xs" fontWeight="600" opacity={0.8}>
-                              USER ID
-                            </Text>
-                            <Text color={textPurple} fontWeight="600" fontSize="md">
-                              #{profile.id}
-                            </Text>
+                            <Text color={textPurple} fontSize="xs" fontWeight="600" opacity={0.8}>USER ID</Text>
+                            <Text color={textPurple} fontWeight="600">#{profile.id}</Text>
                           </Box>
                         </HStack>
                       </Box>
 
-                      <Box
-                        bg={bgTertiary}
-                        borderRadius="lg"
-                        p={3}
-                        border="1px solid"
-                        borderColor={borderColor}
-                      >
+                      {/* Username Card */}
+                      <Box bg={bgTertiary} borderRadius="lg" p={3} border="1px solid" borderColor={borderColor}>
                         <HStack spacing={2}>
-                          <Icon as={FaUser} color={`${gradientFrom}`} boxSize={4} />
+                          <Icon as={FaUser} color={gradientFrom} boxSize={4} />
                           <Box>
-                            <Text color={textPurple} fontSize="xs" fontWeight="600" opacity={0.8}>
-                              USERNAME
-                            </Text>
-                            <Text color={textPurple} fontWeight="600" fontSize="md">
-                              {profile.username}
-                            </Text>
+                            <Text color={textPurple} fontSize="xs" fontWeight="600" opacity={0.8}>USERNAME</Text>
+                            <Text color={textPurple} fontWeight="600">{profile.username}</Text>
                           </Box>
                         </HStack>
                       </Box>
 
-                      <Box
-                        bg={bgTertiary}
-                        borderRadius="lg"
-                        p={3}
-                        border="1px solid"
-                        borderColor={borderColor}
-                      >
+                      {/* Email Card */}
+                      <Box bg={bgTertiary} borderRadius="lg" p={3} border="1px solid" borderColor={borderColor}>
                         <HStack spacing={2}>
-                          <Icon as={FaEnvelope} color={`${gradientFrom}`} boxSize={4} />
+                          <Icon as={FaEnvelope} color={gradientFrom} boxSize={4} />
                           <Box>
-                            <Text color={textPurple} fontSize="xs" fontWeight="600" opacity={0.8}>
-                              EMAIL
-                            </Text>
-                            <Text color={textPurple} fontWeight="600" fontSize="md" noOfLines={1}>
-                              {profile.email}
-                            </Text>
+                            <Text color={textPurple} fontSize="xs" fontWeight="600" opacity={0.8}>EMAIL</Text>
+                            <Text color={textPurple} fontWeight="600" noOfLines={1}>{profile.email}</Text>
                           </Box>
                         </HStack>
                       </Box>
@@ -353,145 +305,55 @@ const Dashboard = () => {
 
                 {/* Statistics Section */}
                 <Box>
-                  <Heading size="md" color={textPurple} mb={4}>
-                    Account Statistics
-                  </Heading>
-                  
+                  <Heading size="md" color={textPurple} mb={4}>Account Statistics</Heading>
                   <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6}>
-                    <Stat
-                      bg={statBg}
-                      p={4}
-                      borderRadius="lg"
-                      border="1px solid"
-                      borderColor={borderColor}
-                    >
+                    <Stat bg={statBg} p={4} borderRadius="lg" border="1px solid" borderColor={borderColor}>
                       <StatLabel color={textPurple} fontWeight="600" fontSize="sm" opacity={0.8}>
                         Account Age
                       </StatLabel>
                       <StatNumber color={textPurple} fontSize="2xl">
                         {profile.created_at ? new Date(profile.created_at).toLocaleDateString() : 'New'}
                       </StatNumber>
-                      <Text color={textSecondary} fontSize="xs" mt={1}>
-                        Member since
-                      </Text>
+                      <Text color={textSecondary} fontSize="xs" mt={1}>Member since</Text>
                     </Stat>
 
-                    <Stat
-                      bg={statBg}
-                      p={4}
-                      borderRadius="lg"
-                      border="1px solid"
-                      borderColor={borderColor}
-                    >
+                    <Stat bg={statBg} p={4} borderRadius="lg" border="1px solid" borderColor={borderColor}>
                       <StatLabel color={textPurple} fontWeight="600" fontSize="sm" opacity={0.8}>
                         Account Status
                       </StatLabel>
                       <StatNumber color={textPurple} fontSize="2xl">
-                        <HStack>
-                          <Badge 
-                            colorScheme="green" 
-                            variant="subtle" 
-                            px={3} 
-                            py={1}
-                            bg={useColorModeValue('green.50', 'green.900')}
-                            color={useColorModeValue('green.700', 'green.200')}
-                          >
-                            Active
-                          </Badge>
-                        </HStack>
+                        <Badge bg={activeBadgeBg} color={activeBadgeColor} px={3} py={1}>
+                          Active
+                        </Badge>
                       </StatNumber>
-                      <Text color={textSecondary} fontSize="xs" mt={1}>
-                        Verified account
-                      </Text>
+                      <Text color={textSecondary} fontSize="xs" mt={1}>Verified account</Text>
                     </Stat>
 
-                    <Stat
-                      bg={statBg}
-                      p={4}
-                      borderRadius="lg"
-                      border="1px solid"
-                      borderColor={borderColor}
-                    >
+                    <Stat bg={statBg} p={4} borderRadius="lg" border="1px solid" borderColor={borderColor}>
                       <StatLabel color={textPurple} fontWeight="600" fontSize="sm" opacity={0.8}>
                         Last Login
                       </StatLabel>
                       <StatNumber color={textPurple} fontSize="2xl">
                         {profile.last_login ? new Date(profile.last_login).toLocaleDateString() : 'Today'}
                       </StatNumber>
-                      <Text color={textSecondary} fontSize="xs" mt={1}>
-                        Recent activity
-                      </Text>
+                      <Text color={textSecondary} fontSize="xs" mt={1}>Recent activity</Text>
                     </Stat>
                   </SimpleGrid>
                 </Box>
 
                 {/* Quick Actions */}
                 <Box mt={6}>
-                  <Heading size="sm" color={textPurple} mb={3}>
-                    Quick Actions
-                  </Heading>
+                  <Heading size="sm" color={textPurple} mb={3}>Quick Actions</Heading>
                   <HStack spacing={4} flexWrap="wrap">
-                    <Button
-                      as={RouterLink}
-                      to="/jobs"
-                      variant="outline"
-                      borderColor={borderColor}
-                      color={textPurple}
-                      _hover={{
-                        bg: bgTertiary,
-                        borderColor: borderColorHover,
-                      }}
-                      size="md"
-                      fontWeight="600"
-                    >
+                    <Button as={RouterLink} to="/jobs" variant="outline" borderColor={borderColor} color={textPurple}>
                       View Jobs
                     </Button>
-                    <Button
-                      as={RouterLink}
-                      to="/jobs/new"
-                      bgGradient={`linear(135deg, ${gradientFrom}, ${gradientTo})`}
-                      color="white"
-                      _hover={{
-                        bgGradient: `linear(135deg, ${gradientTo}, ${gradientFrom})`,
-                        transform: 'translateY(-2px)',
-                        boxShadow: avatarShadow,
-                      }}
-                      size="md"
-                      fontWeight="600"
-                    >
+                    <Button as={RouterLink} to="/jobs/new" bgGradient={`linear(135deg, ${gradientFrom}, ${gradientTo})`} color="white">
                       Create New Job
                     </Button>
                   </HStack>
                 </Box>
               </Box>
-            </Box>
-
-            {/* Activity Timeline Placeholder */}
-            <Box
-              bg={bgSecondary}
-              borderRadius="xl"
-              border="1px solid"
-              borderColor={borderColor}
-              p={6}
-            >
-              <Flex justify="space-between" align="center" mb={4}>
-                <Heading size="sm" color={textPurple}>
-                  Recent Activity
-                </Heading>
-                <Badge 
-                  colorScheme="purple" 
-                  variant="subtle" 
-                  px={3} 
-                  py={1}
-                  bg={badgeBg}
-                  color={badgeText}
-                >
-                  Coming Soon
-                </Badge>
-              </Flex>
-              <Text color={textSecondary} fontSize="sm">
-                Your recent job applications and activity will appear here.
-              </Text>
             </Box>
           </VStack>
         )}
