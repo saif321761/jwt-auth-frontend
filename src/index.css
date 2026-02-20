@@ -1,0 +1,26 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  background: #1e1e2e;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+a {
+  color: #89b4fa;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
